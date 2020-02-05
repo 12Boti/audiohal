@@ -1,0 +1,20 @@
+language: rust
+
+os:
+  - osx
+  - linux
+  - windows
+
+rust:
+  - stable
+  - nightly
+
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
