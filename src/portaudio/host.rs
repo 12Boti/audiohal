@@ -37,6 +37,22 @@ pub struct HostImpl {
 }
 
 impl HostImpl {
+    fn default_output_device_index(&self, _guard: &LockGuard) -> Result<i32> {
+        let host_device_index = unsafe { self.host_info.as_ref() }.defaultOutputDevice;
+        if host_device_index == ffi::paNoDevice {
+            return Err(Error::NoSuchDevice);
+        }
+        assert!(host_device_index >= 0);
+        let device_index =
+            unsafe { ffi::Pa_HostApiDeviceIndexToDeviceIndex(self.host_index, host_device_index) };
+        if device_index < 0 {
+            return Err(ffi::PaErrorCode::from(device_index).into());
+        }
+        Ok(device_index)
+    }
+}
+
+impl Host {
     pub fn with_default_backend() -> Result<Host> {
         let guard = global_lock();
         unsafe { ffi::Pa_Initialize().as_result()? };
@@ -60,22 +76,6 @@ impl HostImpl {
         Ok(Host(HostHandle::new(host)))
     }
 
-    fn default_output_device_index(&self, _guard: &LockGuard) -> Result<i32> {
-        let host_device_index = unsafe { self.host_info.as_ref() }.defaultOutputDevice;
-        if host_device_index == ffi::paNoDevice {
-            return Err(Error::NoSuchDevice);
-        }
-        assert!(host_device_index >= 0);
-        let device_index =
-            unsafe { ffi::Pa_HostApiDeviceIndexToDeviceIndex(self.host_index, host_device_index) };
-        if device_index < 0 {
-            return Err(ffi::PaErrorCode::from(device_index).into());
-        }
-        Ok(device_index)
-    }
-}
-
-impl Host {
     /// Returns the host API's descriptive name (e.g. "CoreAudio").
     ///
     /// # Examples
@@ -161,13 +161,13 @@ mod tests {
     use super::*;
     #[test]
     fn creates_default_backend() {
-        let host = HostImpl::with_default_backend().unwrap();
+        let host = Host::with_default_backend().unwrap();
         println!("Host is called {}", host.name());
     }
 
     #[test]
     fn test_name() {
-        let host = HostImpl::with_default_backend().unwrap();
+        let host = Host::with_default_backend().unwrap();
         assert_eq!(host.0.name, host.name());
     }
 }

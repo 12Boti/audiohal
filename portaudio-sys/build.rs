@@ -32,5 +32,7 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=CoreAudio");
         println!("cargo:rustc-link-lib=framework=CoreFoundation");
         println!("cargo:rustc-link-lib=framework=CoreServices");
+    } else if target.contains("windows") {
+        println!("cargo:rustc-link-lib=ole32");
     }
 }

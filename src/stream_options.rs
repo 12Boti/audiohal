@@ -22,7 +22,7 @@ pub enum SampleRate {
 ///
 /// ```
 /// # use audiohal::*;
-/// # fn my_stream_callback(_: &mut [f32]) {}
+/// # fn my_stream_callback(_: &mut [[f32; 2]]) {}
 /// // Creates a StreamOptions with a stereo f32 frame.
 /// let options = StreamOptions::<[f32; 2]> {
 ///     callback: Box::new(my_stream_callback),

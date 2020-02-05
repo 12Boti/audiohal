@@ -1,10 +1,5 @@
 language: rust
 
-os:
-  - osx
-  - linux
-  - windows
-
 rust:
   - stable
   - nightly
@@ -13,6 +8,8 @@ jobs:
   include:
     - os: linux
       dist: bionic
+    - os: osx
+    - os: windows
 
   allow_failures:
     - rust: nightly
