@@ -1,0 +1,17 @@
+[project]
+name = "audiohal"
+edition = "2018"
+version = "0.1.0"
+authors = ["Ramy <RamiHg@users.noreply.github.com"]
+
+description = "An easy-to-use, efficient, and memory-safe Rust audio API."
+readme = "README.md"
+license = "MIT"
+
+keywords = ["audio", "api", "hal", "cross-platform", "coreaudio", "wasapi", "alsa"]
+categories = ["multimedia::audio", "os", "hardware-support", "game-development"]
+
+repository = "https://github.com/RamiHg/audiohal"
+
+is-it-maintained-issue-resolution = { repository = "https://github.com/RamiHg/audiohal" }
+maintenance = { status = "actively-developed" }
