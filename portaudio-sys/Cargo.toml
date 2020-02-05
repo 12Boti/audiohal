@@ -1,0 +1,19 @@
+[package]
+name = "libportaudio-sys"
+edition = "2018"
+version = "0.1.0"
+authors = ["Ramy El Garawany <RamiHg@users.noreply.github.com>"]
+
+description = "Simple Portaudio bindings. Always compiles Portaudio from scratch."
+keywords = ["audio", "media", "sound"]
+
+[lib]
+name = "libportaudio_sys"
+links = "portaudio"
+
+[dependencies]
+bitflags = "1.2"
+
+[build-dependencies]
+cmake = "0.1"
+bindgen = "0.53"

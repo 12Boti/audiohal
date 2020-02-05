@@ -8,10 +8,17 @@ description = "An easy-to-use, efficient, and memory-safe Rust audio API."
 readme = "README.md"
 license = "MIT"
 
-keywords = ["audio", "api", "hal", "cross-platform", "coreaudio", "wasapi", "alsa"]
+keywords = ["audio", "hal", "coreaudio", "wasapi", "alsa"]
 categories = ["multimedia::audio", "os", "hardware-support", "game-development"]
 
 repository = "https://github.com/RamiHg/audiohal"
 
 is-it-maintained-issue-resolution = { repository = "https://github.com/RamiHg/audiohal" }
 maintenance = { status = "actively-developed" }
+
+[dependencies]
+libportaudio-sys = { path = "portaudio-sys" }
+
+lazy_static = "1.4"
+more-asserts = "0.2"
+sample = "0.10.0"
