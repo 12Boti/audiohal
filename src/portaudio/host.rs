@@ -105,7 +105,7 @@ impl Host {
     pub fn default_output_device(&mut self) -> Result<Device> {
         let guard = global_lock();
         let device_index = self.0.default_output_device_index(&guard)?;
-        crate::portaudio::Device::from_device_index(
+        crate::portaudio::device::internal::from_device_index(
             device_index,
             HostHandle::clone(&self.0),
             &guard,

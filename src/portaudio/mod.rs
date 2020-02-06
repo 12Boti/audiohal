@@ -2,11 +2,11 @@ use lazy_static::lazy_static;
 use libportaudio_sys as ffi;
 use std::sync::{Mutex, MutexGuard};
 
+mod device;
 mod error;
 mod host;
+mod stream;
 mod stream_options;
-
-pub mod device;
 
 // Helpful exports.
 pub use device::Device;

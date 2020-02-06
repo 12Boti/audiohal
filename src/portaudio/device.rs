@@ -3,7 +3,7 @@ use crate::portaudio::host::HostHandle;
 use crate::portaudio::{global_lock, LockGuard};
 use crate::stream_options::StreamOptions;
 
-mod internal;
+pub mod internal;
 
 pub type DeviceHandle = std::sync::Arc<internal::Device>;
 pub struct Device(DeviceHandle);
@@ -27,14 +27,4 @@ impl Device {
     }
 }
 
-impl Device {
-    pub(crate) fn from_device_index(
-        index: i32,
-        host_handle: HostHandle,
-        _guard: &LockGuard,
-    ) -> Result<Device> {
-        Ok(Device(DeviceHandle::new(
-            internal::Device::from_device_index(index, host_handle, _guard)?,
-        )))
-    }
-}
+impl Device {}

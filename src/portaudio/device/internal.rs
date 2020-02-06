@@ -122,3 +122,13 @@ impl Device {
 fn frames_per_buffer_to_latency(frames_per_buffer: i32, sample_rate: i32) -> f64 {
     f64::from(sample_rate) / f64::from(frames_per_buffer)
 }
+
+pub fn from_device_index(
+    index: i32,
+    host_handle: HostHandle,
+    _guard: &LockGuard,
+) -> Result<super::Device> {
+    Ok(super::Device(super::DeviceHandle::new(
+        Device::from_device_index(index, host_handle, _guard)?,
+    )))
+}
