@@ -77,13 +77,6 @@ impl Host {
     }
 
     /// Returns the host API's descriptive name (e.g. "CoreAudio").
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// println!("This system's default host is {}.", audiohal::Host::with_default_backend()?.name());
-    /// # audiohal::Result::Ok(())
-    /// ```
     pub fn name(&self) -> &str {
         &self.0.name
     }
@@ -97,8 +90,10 @@ impl Host {
     ///
     /// ```
     /// let mut host = audiohal::Host::with_default_backend()?;
-    /// let mut output_device = host.default_output_device()?;
-    /// println!("{}.", output_device.name());
+    /// match host.default_output_device() {
+    ///     Ok(device) => println!("Default output device name is {}.", device.name()),
+    ///     Err(_) => println!("No devices available."),
+    /// };
     /// # audiohal::Result::Ok(())
     /// ```
     ///

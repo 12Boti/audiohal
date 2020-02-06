@@ -11,9 +11,13 @@ keywords = ["audio", "media", "sound"]
 name = "libportaudio_sys"
 links = "portaudio"
 
+[features]
+default = []
+regenerate_bindings = ["bindgen"]
+
 [dependencies]
 bitflags = "1.2"
 
 [build-dependencies]
 cmake = "0.1"
-bindgen = "0.53"
+bindgen = { version = "0.53", optional = true }

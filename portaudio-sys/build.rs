@@ -22,6 +22,15 @@ fn main() {
     // Actually build.
     let dst = cmake::Config::new("portaudio")
         .define("PA_BUILD_SHARED", "OFF")
+        // Don't use DirectSound.
+        .define("PA_USE_DS", "OFF")
+        // Don't use MME.
+        .define("PA_USE_WMME", "OFF")
+        // Don't use WDMKS.
+        .define("PA_USE_WDMKS", "OFF")
+        .define("PA_USE_WDMKS_DEVICE_INFO", "OFF")
+        // Keep library names consistent in Windows (since we don't build shared).
+        .define("PA_LIBNAME_ADD_SUFFIX", "OFF")
         .build();
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static=portaudio");
@@ -34,5 +43,6 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=CoreServices");
     } else if target.contains("windows") {
         println!("cargo:rustc-link-lib=ole32");
+        println!("cargo:rustc-link-lib=uuid");
     }
 }

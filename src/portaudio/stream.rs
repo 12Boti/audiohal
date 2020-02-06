@@ -11,5 +11,5 @@ struct StreamImpl {
 }
 
 impl StreamImpl {
-    fn from_options_and_params(
+    fn from_options_and_params() {}
 }
