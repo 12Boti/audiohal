@@ -2,7 +2,7 @@ fn main() {
     let target = std::env::var("TARGET").unwrap();
     std::env::set_var("LLVM_CONFIG_PATH", "/usr/local/opt/llvm/bin/llvm-config");
 
-    #[cfg(regenerate_bindings)]
+    #[cfg(feature = "regenerate_bindings")]
     bindgen::Builder::default()
         .header("portaudio/include/portaudio.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
@@ -11,7 +11,6 @@ fn main() {
         .blacklist_type("PaStreamCallbackFlags|PaStreamFlags|PaSampleFormat|PaError")
         .raw_line("use crate::{PaSampleFormat, PaStreamFlags, PaStreamCallbackFlags};")
         .raw_line("pub type PaError = PaErrorCode;")
-        .derive_copy(false)
         .derive_debug(false)
         .generate_comments(true)
         .generate()

@@ -9,18 +9,6 @@ use crate::stream_options::StreamOptions;
 use crate::{Format, SampleRate};
 use std::convert::TryInto;
 
-use std::os::raw::{c_ulong, c_void};
-extern "C" fn dummy_callback(
-    input: *const c_void,
-    output: *mut c_void,
-    frame_count: c_ulong,
-    time_info: *const ffi::PaStreamCallbackTimeInfo,
-    status_flags: ffi::PaStreamCallbackFlags,
-    user_data: *mut c_void,
-) -> i32 {
-    0
-}
-
 pub struct Device {
     pub name: String,
     pub info: NonNull<ffi::PaDeviceInfo>,
@@ -55,22 +43,7 @@ impl Device {
 
     pub fn open_outstream<Frame>(&self, options: &StreamOptions<Frame>) -> Result<()> {
         let (params, sample_rate) = self.options_to_stream_params(options)?;
-        let mut pa_stream = std::ptr::null_mut();
-        unsafe {
-            ffi::Pa_OpenStream(
-                &mut pa_stream,
-                std::ptr::null(),
-                &params,
-                sample_rate.into(),
-                options
-                    .frames_per_buffer
-                    .unwrap_or(ffi::paFramesPerBufferUnspecified as i32) as c_ulong,
-                ffi::PaStreamFlags::PaNoFlag, // No flags
-                Some(dummy_callback),
-                std::ptr::null_mut(),
-            )
-        }
-        .as_result()?;
+
         Ok(())
     }
 

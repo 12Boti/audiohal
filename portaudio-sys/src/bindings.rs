@@ -25,6 +25,7 @@ extern "C" {
 #[doc = "@see Pa_GetVersionInfo, paMakeVersionNumber"]
 #[doc = "@version Available as of 19.5.0."]
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub struct PaVersionInfo {
     pub versionMajor: ::std::os::raw::c_int,
     pub versionMinor: ::std::os::raw::c_int,
@@ -255,6 +256,7 @@ pub enum PaHostApiTypeId {
 }
 #[doc = " A structure containing information about a particular host API."]
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub struct PaHostApiInfo {
     #[doc = " this is struct version 1"]
     pub structVersion: ::std::os::raw::c_int,
@@ -413,6 +415,7 @@ extern "C" {
 }
 #[doc = " Structure used to return information about a host error condition."]
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub struct PaHostErrorInfo {
     #[doc = "< the host API which returned the error code"]
     pub hostApiType: PaHostApiTypeId,
@@ -524,6 +527,7 @@ pub type PaTime = f64;
 #[doc = " A structure providing information and capabilities of PortAudio devices."]
 #[doc = "Devices may support input, output or both input and output."]
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub struct PaDeviceInfo {
     pub structVersion: ::std::os::raw::c_int,
     pub name: *const ::std::os::raw::c_char,
@@ -828,6 +832,7 @@ pub struct PaStream(pub ::std::os::raw::c_void);
 #[doc = ""]
 #[doc = "@see PaStreamCallback, Pa_GetStreamTime"]
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub struct PaStreamCallbackTimeInfo {
     #[doc = "< The time when the first sample of the input buffer was captured at the ADC input"]
     pub inputBufferAdcTime: PaTime,
@@ -1172,6 +1177,7 @@ extern "C" {
 #[doc = " A structure containing unchanging information about an open stream."]
 #[doc = "@see Pa_GetStreamInfo"]
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub struct PaStreamInfo {
     #[doc = " this is struct version 1"]
     pub structVersion: ::std::os::raw::c_int,
