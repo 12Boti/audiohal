@@ -19,7 +19,6 @@ impl TryFrom<Backend> for ffi::PaHostApiTypeId {
         use Backend::*;
         match backend {
             Jack => Ok(paJACK),
-            PulseAudio => Err(Error::BackendUnavailable),
             Alsa => Ok(paALSA),
             CoreAudio => Ok(paCoreAudio),
             Wasapi => Ok(paWASAPI),
@@ -53,26 +52,37 @@ impl HostImpl {
 }
 
 impl Host {
+    /// Creates a host with the default system backend.
     pub fn with_default_backend() -> Result<Host> {
-        let guard = global_lock();
-        unsafe { ffi::Pa_Initialize().as_result()? };
+        let _guard = global_lock();
+        unsafe { ffi::Pa_Initialize() }.as_result()?;
         let mut host = HostImpl::new();
         // TODO: Expose default backend.
         let host_index = unsafe { ffi::Pa_GetDefaultHostApi() };
         if host_index < 0 {
-            return Err(Error::Unknown); // TODO: Better error message.
+            return Err(ffi::PaErrorCode::from(host_index).into());
         }
-        host.init_with_pa_host_index(host_index, guard)?;
+        host.init_with_pa_host_index(host_index, _guard)?;
         Ok(Host(HostHandle::new(host)))
     }
 
+    /// Creates a host with a specific backend.
+    /// 
+    /// Will return [`Error::BackendUnavailable`] if the backend support was not
+    /// compiled.
+    /// 
+    /// # Examples
+    /// ```
+    /// # use audiohal::*;
+    /// assert!(Host::with_backend(Backend::Dummy).is_ok(), "The dummy backend should always be available.");
+    /// ```
     pub fn with_backend(backend: Backend) -> Result<Host> {
-        let guard = global_lock();
+        let _guard = global_lock();
         // Initialize Pa.
-        unsafe { ffi::Pa_Initialize().as_result()? };
+        unsafe { ffi::Pa_Initialize() }.as_result()?;
         let mut host = HostImpl::new();
         let pa_backend = backend.try_into()?;
-        host.init_with_pa_host_type(pa_backend, guard)?;
+        host.init_with_pa_host_type(pa_backend, _guard)?;
         Ok(Host(HostHandle::new(host)))
     }
 
@@ -154,15 +164,33 @@ impl Drop for HostImpl {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use galvanic_assert::matchers::*;
+    use galvanic_assert::matchers::variant::*;
+
     #[test]
-    fn creates_default_backend() {
-        let host = Host::with_default_backend().unwrap();
+    fn creates_default_backend() -> Result<()> {
+        let host = Host::with_default_backend()?;
         println!("Host is called {}", host.name());
+        Ok(())
     }
 
     #[test]
-    fn test_name() {
-        let host = Host::with_default_backend().unwrap();
-        assert_eq!(host.0.name, host.name());
+    fn handles_invalid_backend() {
+        // Pick a backend that we know doesn't exist.
+        #[cfg(any(unix, target_os = "macos"))]
+        let backend = Backend::Wasapi;
+        #[cfg(windows)]
+        let backend = Backend::CoreAudio;
+        assert_that!(&Host::with_backend(backend), maybe_err(eq(Error::BackendUnavailable)));
     }
+
+
+    #[test]
+     fn internal_handles_invalid_host_index() {
+        let _guard = global_lock();
+        unsafe { ffi::Pa_Initialize() }.as_result().unwrap();
+        let mut host = HostImpl::new();
+        assert_eq!(host.init_with_pa_host_index(100_000, _guard), Err(Error::BackendUnavailable));
+    }
+
 }

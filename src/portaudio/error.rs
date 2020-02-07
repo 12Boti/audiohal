@@ -8,10 +8,13 @@ impl From<ffi::PaError> for Error {
         use Error::*;
 
         match error {
-            paInsufficientMemory => NoMem,
-            paInvalidHostApi => Invalid,
+            paInsufficientMemory => OutOfMemory,
+            paInvalidHostApi => BackendUnavailable,
             paInternalError => Unknown,
             paHostApiNotFound => BackendUnavailable,
+            // Not actually sure how to handle paNotInitialized. Should never happen
+            // under normal circumstances.
+            paNotInitialized => Unknown, 
             _ => panic!("Figure out error mapping for {:?}", error),
         }
     }

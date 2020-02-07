@@ -1,6 +1,19 @@
+use std::path::Path;
+use std::process::Command;
+
 fn main() {
     let target = std::env::var("TARGET").unwrap();
-    std::env::set_var("LLVM_CONFIG_PATH", "/usr/local/opt/llvm/bin/llvm-config");
+   //  std::env::set_var("LLVM_CONFIG_PATH", "/usr/local/opt/llvm/bin/llvm-config");
+
+    if !Path::new("portaudio/CMakeLists.txt").exists() {
+        Command::new("git")
+            .args(&["submodule", "update", "--init"])
+            .status()
+            .expect("Could not update portaudio submodule. Is git in path?");
+        assert!(Path::new("portaudio/CMakeLists.txt").exists(),
+            "Could not fetch the portaudio submodule. Likely due to a git bug in an old version. \
+             Please manually remove the portaudio directory and try again.");
+    }
 
     #[cfg(feature = "regenerate_bindings")]
     bindgen::Builder::default()
@@ -21,15 +34,15 @@ fn main() {
     // Actually build.
     let dst = cmake::Config::new("portaudio")
         .define("PA_BUILD_SHARED", "OFF")
-        // Don't use DirectSound.
+        // Don't use legacy windows APIs (DirectSound, MME, WDMKS).
         .define("PA_USE_DS", "OFF")
-        // Don't use MME.
         .define("PA_USE_WMME", "OFF")
-        // Don't use WDMKS.
         .define("PA_USE_WDMKS", "OFF")
         .define("PA_USE_WDMKS_DEVICE_INFO", "OFF")
         // Keep library names consistent in Windows (since we don't build shared).
         .define("PA_LIBNAME_ADD_SUFFIX", "OFF")
+        // Enable the usage of the skeleton API.
+        .cflag("-DPA_USE_SKELETON=1")
         .build();
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static=portaudio");
@@ -43,5 +56,15 @@ fn main() {
     } else if target.contains("windows") {
         println!("cargo:rustc-link-lib=ole32");
         println!("cargo:rustc-link-lib=uuid");
+    } else if target.contains("linux") {
+        let out_dir = std::env::var("OUT_DIR").unwrap();
+        // This is the easiest way I can think of to figure out if portaudio was compiled
+        // with ALSA.
+        if Path::new(&out_dir).join("include/pa_linux_alsa.h").exists() {
+            println!("cargo:rustc-link-lib=asound");
+        } else {
+            println!("cargo:warning=Could not find ALSA (libasound2-dev) on this machine. \
+                      Linux support will be disabled.");
+        }
     }
 }

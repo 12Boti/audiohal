@@ -3,7 +3,6 @@
 pub enum Backend {
     None,
     Jack,
-    PulseAudio,
     Alsa,
     CoreAudio,
     Wasapi,

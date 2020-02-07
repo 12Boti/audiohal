@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use libportaudio_sys as ffi;
-use std::sync::{Mutex, MutexGuard};
+use parking_lot::{ReentrantMutex, ReentrantMutexGuard};
 
 mod device;
 mod error;
@@ -13,15 +13,14 @@ pub use device::Device;
 pub use host::Host;
 
 lazy_static! {
-    static ref GLOBAL_LOCK: Mutex<()> = Mutex::new(());
+    static ref GLOBAL_LOCK: ReentrantMutex<()> = ReentrantMutex::new(());
 }
 
-type LockGuard = MutexGuard<'static, ()>;
+type LockGuard = ReentrantMutexGuard<'static, ()>;
 
 fn global_lock() -> LockGuard {
     GLOBAL_LOCK
         .lock()
-        .expect("A PortAudio host thread has panicked. Aborting.")
 }
 
 impl std::convert::TryFrom<crate::Format> for ffi::PaSampleFormat {
