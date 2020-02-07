@@ -3,14 +3,20 @@ language: rust
 rust:
   - stable
   - nightly
+os:
+  - linux
+  - osx
+  - windows
+
+addons:
+  apt:
+    packages:
+      - libasound2-dev
+
+before_script:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then rustup default stable-msvc; fi
 
 jobs:
-  include:
-    - os: linux
-      dist: bionic
-    - os: osx
-    - os: windows
-
   allow_failures:
     - rust: nightly
   fast_finish: true
