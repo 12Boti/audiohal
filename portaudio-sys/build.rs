@@ -3,16 +3,18 @@ use std::process::Command;
 
 fn main() {
     let target = std::env::var("TARGET").unwrap();
-   //  std::env::set_var("LLVM_CONFIG_PATH", "/usr/local/opt/llvm/bin/llvm-config");
+    //  std::env::set_var("LLVM_CONFIG_PATH", "/usr/local/opt/llvm/bin/llvm-config");
 
     if !Path::new("portaudio/CMakeLists.txt").exists() {
         Command::new("git")
             .args(&["submodule", "update", "--init"])
             .status()
             .expect("Could not update portaudio submodule. Is git in path?");
-        assert!(Path::new("portaudio/CMakeLists.txt").exists(),
+        assert!(
+            Path::new("portaudio/CMakeLists.txt").exists(),
             "Could not fetch the portaudio submodule. Likely due to a git bug in an old version. \
-             Please manually remove the portaudio directory and try again.");
+             Please manually remove the portaudio directory and try again."
+        );
     }
 
     #[cfg(feature = "regenerate_bindings")]
@@ -21,9 +23,9 @@ fn main() {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .rustified_non_exhaustive_enum("PaHostApiTypeId|PaErrorCode|PaStreamCallbackResult")
         .new_type_alias("PaStream")
-        .blacklist_type("PaStreamCallbackFlags|PaStreamFlags|PaSampleFormat|PaError")
+        .new_type_alias("PaError")
+        .blacklist_type("PaStreamCallbackFlags|PaStreamFlags|PaSampleFormat")
         .raw_line("use crate::{PaSampleFormat, PaStreamFlags, PaStreamCallbackFlags};")
-        .raw_line("pub type PaError = PaErrorCode;")
         .derive_debug(false)
         .generate_comments(true)
         .generate()
@@ -63,8 +65,10 @@ fn main() {
         if Path::new(&out_dir).join("include/pa_linux_alsa.h").exists() {
             println!("cargo:rustc-link-lib=asound");
         } else {
-            println!("cargo:warning=Could not find ALSA (libasound2-dev) on this machine. \
-                      Linux support will be disabled.");
+            println!(
+                "cargo:warning=Could not find ALSA (libasound2-dev) on this machine. \
+                      Linux support will be disabled."
+            );
         }
     }
 }

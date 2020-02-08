@@ -1,17 +1,19 @@
 use libportaudio_sys as ffi;
+use std::borrow::Borrow;
+use std::convert::TryInto;
 use std::ptr::NonNull;
 
 use crate::error::{Error, Result};
 use crate::portaudio::error::PaErrorAsResult;
 use crate::portaudio::host::HostHandle;
-use crate::portaudio::LockGuard;
+use crate::portaudio::stream::{new_outstream, Stream, StreamOpenParams};
+use crate::portaudio::{global_lock, LockGuard, RawPtr};
 use crate::stream_options::StreamOptions;
 use crate::{Format, SampleRate};
-use std::convert::TryInto;
 
 pub struct Device {
     pub name: String,
-    pub info: NonNull<ffi::PaDeviceInfo>,
+    info: RawPtr<ffi::PaDeviceInfo>,
 
     index: i32,
     /// Handle to parent host.
@@ -26,25 +28,39 @@ impl Device {
         _guard: &LockGuard,
     ) -> Result<Device> {
         debug_assert_ge!(index, 0);
-        let device_info: NonNull<ffi::PaDeviceInfo> =
-            NonNull::new(unsafe { ffi::Pa_GetDeviceInfo(index) as *mut _ })
-                .ok_or(Error::NoSuchDevice)?;
-        let name = unsafe { std::ffi::CStr::from_ptr(device_info.as_ref().name) }
+        let device_info = unsafe {
+            ffi::Pa_GetDeviceInfo(index)
+                .as_ref()
+                .ok_or(Error::NoSuchDevice)?
+        };
+        let name = unsafe { std::ffi::CStr::from_ptr(device_info.name) }
             .to_str()
-            .or(Err(Error::Unknown))? // TODO: Better error message.
+            .or(Err(Error::Unknown(
+                "Could not convert device name to UTF-8.",
+            )))?
             .to_string();
         Ok(Device {
             name,
-            info: device_info,
+            info: RawPtr::new(device_info as *const _).unwrap(),
             index,
             _parent_host: host_handle,
         })
     }
 
-    pub fn open_outstream<Frame>(&self, options: &StreamOptions<Frame>) -> Result<()> {
-        let (params, sample_rate) = self.options_to_stream_params(options)?;
-
-        Ok(())
+    pub fn open_outstream<Frame>(
+        &self,
+        options: StreamOptions<Frame>,
+        device_handle: super::DeviceHandle,
+    ) -> Result<Stream<Frame>> {
+        // Early-out if the stream spec is not supported?
+        // self.is_stream_spec_supported(&options, true, &global_lock())?;
+        let (params, sample_rate) = self.options_to_stream_params(&options)?;
+        let open_params = StreamOpenParams {
+            user_options: options,
+            pa_params: params,
+            sample_rate,
+        };
+        new_outstream(open_params, device_handle)
     }
 
     pub fn is_stream_spec_supported<F>(
@@ -67,17 +83,19 @@ impl Device {
         &self,
         options: &StreamOptions<F>,
     ) -> Result<(ffi::PaStreamParameters, i32)> {
+        let info = unsafe { self.info.as_ref().unwrap() };
         let sample_rate = match options.sample_rate {
             Some(SampleRate::Exact(rate)) => rate,
-            None | Some(SampleRate::NearestTo(_)) => {
-                unsafe { self.info.as_ref() }.defaultSampleRate as i32
-            }
+            None | Some(SampleRate::NearestTo(_)) => info.defaultSampleRate as i32,
             _ => panic!("Non-exhaustive sample rate."),
         };
         let latency = if let Some(frames_per_buffer) = options.frames_per_buffer {
+            if frames_per_buffer <= 0 {
+                return Err(Error::InvalidFramesPerBuffer);
+            }
             frames_per_buffer_to_latency(frames_per_buffer, sample_rate)
         } else {
-            unsafe { self.info.as_ref().defaultHighOutputLatency }
+            info.defaultHighOutputLatency
         };
         Ok((
             ffi::PaStreamParameters {

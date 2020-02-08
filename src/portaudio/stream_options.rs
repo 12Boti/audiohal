@@ -8,7 +8,9 @@ use crate::stream_options::Format;
 pub fn unpack_pa_formats(format_bitfield: ffi::PaSampleFormat) -> Result<Vec<Format>> {
     if format_bitfield.intersects(PaSampleFormat::paCustomFormat | PaSampleFormat::paNonInterleaved)
     {
-        return Err(Error::Unknown); // TODO: Better error message.
+        return Err(Error::Unknown(
+            "Does not support custom and/or interleaved channels.",
+        ));
     }
     let mut formats = Vec::new();
     for &(pa_format, format) in &[

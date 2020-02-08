@@ -14,6 +14,8 @@ pub enum SampleRate {
     NearestTo(i32),
 }
 
+pub type Callback<Frame> = Box<dyn FnMut(&mut [Frame]) + Send + Sync>;
+
 /// Configures the creation of input/output streams.
 ///
 /// This struct sets properties of a stream such as its format, number of channels, sample rate, and
@@ -38,7 +40,7 @@ pub struct StreamOptions<Frame> {
     pub frames_per_buffer: Option<i32>,
     pub sample_rate: Option<SampleRate>,
 
-    pub callback: Box<dyn FnMut(&mut [Frame])>,
+    pub callback: Callback<Frame>,
 }
 
 // Default dummy callback that does nothing.

@@ -1,5 +1,7 @@
 #![warn(clippy::all)]
 
+use std::os::raw::c_int;
+
 pub use bindings::*;
 pub use flags::*;
 
@@ -8,16 +10,24 @@ pub use flags::*;
 #[allow(non_camel_case_types)]
 mod bindings;
 
-// TODO: Implement this safely.
-impl From<i32> for PaErrorCode {
-    fn from(code: i32) -> PaErrorCode {
-        match code {
-            0 | -10000..=-9972 => unsafe { std::mem::transmute(code) },
-            _ => panic!(
-                "Unexpected error code: {}. Most likely unrecoverable error.",
-                code
-            ),
+impl From<PaError> for Result<c_int, PaErrorCode> {
+    fn from(error: PaError) -> Result<c_int, PaErrorCode> {
+        if error.0 >= 0 {
+            Ok(error.0)
+        } else if let -10000..=-9972 = error.0 {
+            Err(unsafe { std::mem::transmute(error.0) }) // TODO: Make safer.
+        } else {
+            panic!(
+                "Unexpected error code {}. Likely undefined behavior.",
+                error.0
+            )
         }
+    }
+}
+
+impl From<c_int> for PaError {
+    fn from(val: c_int) -> PaError {
+        PaError(val)
     }
 }
 
@@ -31,11 +41,22 @@ mod flags {
         #[repr(transparent)]
         pub struct PaStreamFlags: std::os::raw::c_ulong {
             const PaNoFlag          = 0b00;
+            /// Disable default clipping of out of range samples.
             const PaClipOff         = 0b01;
+            /// Disable default dithering.
             const PaDitherOff       = 0b10;
+            /// Flag requests that where possible a full duplex stream will not discard
+            /// overflowed input samples without calling the stream callback. This flag is
+            /// only valid for full duplex callback streams and only when used in combination
+            /// with the paFramesPerBufferUnspecified (0) framesPerBuffer parameter. Using
+            /// this flag incorrectly results in a paInvalidFlag error being returned from
+            /// Pa_OpenStream and Pa_OpenDefaultStream.
             const PaNeverDropInput  = 0b100;
+            /// Call the stream callback to fill initial output buffers, rather than the
+            /// default behavior of priming the buffers with zeros (silence). This flag has
+            /// no effect for input-only and blocking read/write streams.
             const PaPrimeOutputBuffersUsingStreamCallback = 0b1000;
-
+            /// A mask specifying the platform specific bits.
             const PaPlatformSpecificFlags = 0xFFFF_0000;
         }
     }
