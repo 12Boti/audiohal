@@ -63,21 +63,6 @@ impl Device {
         new_outstream(open_params, device_handle)
     }
 
-    pub fn is_stream_spec_supported<F>(
-        &self,
-        options: &StreamOptions<F>,
-        is_output: bool,
-        _guard: &LockGuard,
-    ) -> Result<()> {
-        let (params, sample_rate) = self.options_to_stream_params(options)?;
-        if is_output {
-            unsafe { ffi::Pa_IsFormatSupported(std::ptr::null(), &params, sample_rate.into()) }
-        } else {
-            unsafe { ffi::Pa_IsFormatSupported(&params, std::ptr::null(), sample_rate.into()) }
-        }
-        .as_result()?;
-        Ok(())
-    }
 
     fn options_to_stream_params<F>(
         &self,
@@ -85,8 +70,8 @@ impl Device {
     ) -> Result<(ffi::PaStreamParameters, i32)> {
         let info = unsafe { self.info.as_ref().unwrap() };
         let sample_rate = match options.sample_rate {
-            Some(SampleRate::Exact(rate)) => rate,
-            None | Some(SampleRate::NearestTo(_)) => info.defaultSampleRate as i32,
+            SampleRate::Exact(rate) => rate,
+            SampleRate::DeviceDefault | SampleRate::NearestTo(_) => info.defaultSampleRate as i32,
             _ => panic!("Non-exhaustive sample rate."),
         };
         let latency = if let Some(frames_per_buffer) = options.frames_per_buffer {
@@ -111,7 +96,7 @@ impl Device {
 }
 
 fn frames_per_buffer_to_latency(frames_per_buffer: i32, sample_rate: i32) -> f64 {
-    f64::from(sample_rate) / f64::from(frames_per_buffer)
+    f64::from(frames_per_buffer) / f64::from(sample_rate)
 }
 
 pub fn from_device_index(

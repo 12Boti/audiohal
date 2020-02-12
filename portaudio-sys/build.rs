@@ -45,6 +45,8 @@ fn main() {
         .define("PA_LIBNAME_ADD_SUFFIX", "OFF")
         // Enable the usage of the skeleton API.
         .cflag("-DPA_USE_SKELETON=1")
+        //        .cflag("-DPA_ENABLE_DEBUG_OUTPUT=1")
+        //        .cflag("-DPA_LOG_API_CALLS=1")
         .build();
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static=portaudio");

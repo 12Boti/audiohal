@@ -8,6 +8,8 @@ mod host;
 mod stream;
 mod stream_options;
 
+mod internal;
+
 // Public API exports.
 pub use device::Device;
 pub use host::Host;
@@ -65,6 +67,14 @@ impl<T> RawPtr<T> {
     fn as_ptr(&self) -> *const T {
         self.0
     }
+
+    fn as_ptr_mut(&self) -> *mut T {
+        self.0 as *mut T
+    }
+
+    fn is_null(&self) -> bool {
+        self.0.is_null()
+    }
 }
 
 unsafe impl<T> Send for RawPtr<T> {}
@@ -83,4 +93,12 @@ mod test_prelude {
     }
 
     pub fn assert_send<T: Send>() {}
+
+    lazy_static! {
+        static ref TEST_LOCK: ReentrantMutex<()> = ReentrantMutex::new(());
+    }
+
+    pub fn test_lock() -> LockGuard {
+        TEST_LOCK.lock()
+    }
 }

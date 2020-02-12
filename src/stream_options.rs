@@ -1,3 +1,6 @@
+use sample::Sample;
+
+#[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Format {
     F32,
@@ -12,9 +15,16 @@ pub enum Format {
 pub enum SampleRate {
     Exact(i32),
     NearestTo(i32),
+    DeviceDefault,
 }
 
-pub type Callback<Frame> = Box<dyn FnMut(&mut [Frame]) + Send + Sync>;
+impl Default for SampleRate {
+    fn default() -> SampleRate {
+        SampleRate::DeviceDefault
+    }
+}
+
+pub type Callback<Frame> = Box<dyn FnMut(&mut [Frame]) + Send>;
 
 /// Configures the creation of input/output streams.
 ///
@@ -38,7 +48,7 @@ pub struct StreamOptions<Frame> {
     pub n_channels: i32,
 
     pub frames_per_buffer: Option<i32>,
-    pub sample_rate: Option<SampleRate>,
+    pub sample_rate: SampleRate,
 
     pub callback: Callback<Frame>,
 }
@@ -55,9 +65,8 @@ where
         StreamOptions {
             format: Sample::FORMAT,
             n_channels: Frame::N_CHANNELS,
-
+            sample_rate: SampleRate::default(),
             frames_per_buffer: None,
-            sample_rate: None,
 
             callback: Box::new(dummy_callback),
         }
@@ -86,4 +95,15 @@ impl<T> HasDefaultNChannels for [T; 1] {
 }
 impl<T> HasDefaultNChannels for [T; 2] {
     const N_CHANNELS: i32 = 2;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn correct_default_n_channels() {
+        assert_eq!(StreamOptions::<[f32; 1]>::default().n_channels, 1);
+        assert_eq!(StreamOptions::<[f32; 2]>::default().n_channels, 2);
+    }
 }
