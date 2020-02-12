@@ -1,15 +1,14 @@
 use libportaudio_sys as ffi;
-use std::borrow::Borrow;
 use std::convert::TryInto;
-use std::ptr::NonNull;
 
 use crate::error::{Error, Result};
-use crate::portaudio::error::PaErrorAsResult;
+use crate::portaudio::device::DeviceHandle;
 use crate::portaudio::host::HostHandle;
-use crate::portaudio::stream::{new_outstream, Stream, StreamOpenParams};
-use crate::portaudio::{global_lock, LockGuard, RawPtr};
+use crate::portaudio::internal::stream::StreamOpenParams;
+use crate::portaudio::stream::{new_outstream, Stream};
+use crate::portaudio::{LockGuard, RawPtr};
 use crate::stream_options::StreamOptions;
-use crate::{Format, SampleRate};
+use crate::SampleRate;
 
 pub struct Device {
     pub name: String,
@@ -50,7 +49,7 @@ impl Device {
     pub fn open_outstream<Frame>(
         &self,
         options: StreamOptions<Frame>,
-        device_handle: super::DeviceHandle,
+        device_handle: DeviceHandle,
     ) -> Result<Stream<Frame>> {
         // Early-out if the stream spec is not supported?
         // self.is_stream_spec_supported(&options, true, &global_lock())?;
@@ -62,7 +61,6 @@ impl Device {
         };
         new_outstream(open_params, device_handle)
     }
-
 
     fn options_to_stream_params<F>(
         &self,
@@ -97,14 +95,4 @@ impl Device {
 
 fn frames_per_buffer_to_latency(frames_per_buffer: i32, sample_rate: i32) -> f64 {
     f64::from(frames_per_buffer) / f64::from(sample_rate)
-}
-
-pub fn from_device_index(
-    index: i32,
-    host_handle: HostHandle,
-    _guard: &LockGuard,
-) -> Result<super::Device> {
-    Ok(super::Device(super::DeviceHandle::new(
-        Device::from_device_index(index, host_handle, _guard)?,
-    )))
 }

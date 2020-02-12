@@ -2,6 +2,8 @@
 #![warn(clippy::pedantic)]
 // #![warn(missing_docs)]
 #![doc(deny(intra_link_resolution))]
+// TODO: Remove once non_exhaustive is in stable.
+#![allow(unreachable_patterns)]
 
 #[macro_use]
 extern crate more_asserts;

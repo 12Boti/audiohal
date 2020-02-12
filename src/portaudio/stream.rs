@@ -1,7 +1,5 @@
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::portaudio::device::DeviceHandle;
-use crate::portaudio::{global_lock, LockGuard, RawPtr};
-use crate::StreamOptions;
 
 use crate::portaudio::internal::stream as internal;
 
@@ -30,7 +28,7 @@ impl<Frame> Stream<Frame> {
         self.0.start()
     }
 
-    pub fn close(self) {
+    pub fn close(mut self) {
         self.0
             .close()
             .expect("Could not close stream. No obvious way to cleanly handle error.")
@@ -47,6 +45,7 @@ pub fn new_outstream<Frame>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::Error;
     use crate::portaudio::test_prelude::*;
     use crate::SampleRate;
     use std::sync::Arc;
@@ -66,15 +65,15 @@ mod tests {
 
     #[test]
     fn creates_outstream() -> Result<()> {
-        let _lock = test_lock();
+        begin!();
         let mut device = Host::with_default_backend()?.default_output_device()?;
-        let stream = device.open_outstream(StreamOptions::<[f32; 2]>::default())?;
+        device.open_outstream(StreamOptions::<[f32; 2]>::default())?;
         Ok(())
     }
 
     #[test]
     fn can_start_stream() -> Result<()> {
-        let _lock = test_lock();
+        begin!();
         let pair = Arc::new((Mutex::new(false), Condvar::new()));
         let pair2 = Arc::clone(&pair);
         let cb = move |buffer: &mut [[f32; 2]]| {
@@ -94,13 +93,16 @@ mod tests {
         stream.start()?;
         let (lock, cvar) = &*pair;
         // Wait for our notification.
-        cvar.wait_timeout(lock.lock().unwrap(), Duration::from_secs(20));
-        assert_eq!(*lock.lock().unwrap(), true);
+        let (guard, _) = cvar
+            .wait_timeout(lock.lock().unwrap(), Duration::from_secs(20))
+            .unwrap();
+        assert_eq!(*guard, true);
         Ok(())
     }
 
     #[test]
     fn errors_if_invalid_sample_rate() {
+        begin!();
         let stream = make_stream_with(StreamOptions {
             sample_rate: SampleRate::Exact(-100),
             ..Default::default()
@@ -110,6 +112,7 @@ mod tests {
 
     #[test]
     fn errors_if_incompatible_sample_rate() {
+        begin!();
         assert_that!(
             &make_stream_with(StreamOptions {
                 sample_rate: SampleRate::Exact(1),
@@ -121,6 +124,7 @@ mod tests {
 
     #[test]
     fn errors_if_invalid_frames_per_buffer() {
+        begin!();
         assert_that!(
             &make_stream_with(StreamOptions {
                 frames_per_buffer: Some(-100),
@@ -132,6 +136,7 @@ mod tests {
 
     #[test]
     fn errors_if_unsupported_n_channels() {
+        begin!();
         assert_that!(
             &make_stream_with(StreamOptions {
                 n_channels: 100_000,

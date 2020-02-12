@@ -5,6 +5,7 @@ use ffi::PaSampleFormat;
 use crate::error::{Error, Result};
 use crate::stream_options::Format;
 
+#[allow(dead_code)]
 pub fn unpack_pa_formats(format_bitfield: ffi::PaSampleFormat) -> Result<Vec<Format>> {
     if format_bitfield.intersects(PaSampleFormat::paCustomFormat | PaSampleFormat::paNonInterleaved)
     {

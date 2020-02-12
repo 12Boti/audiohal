@@ -3,7 +3,6 @@ use std::process::Command;
 
 fn main() {
     let target = std::env::var("TARGET").unwrap();
-    //  std::env::set_var("LLVM_CONFIG_PATH", "/usr/local/opt/llvm/bin/llvm-config");
 
     if !Path::new("portaudio/CMakeLists.txt").exists() {
         Command::new("git")

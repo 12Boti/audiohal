@@ -3,7 +3,7 @@ use std::os::raw::{c_ulong, c_void};
 
 use crate::error::{Error, Result};
 use crate::portaudio::device::DeviceHandle;
-use crate::portaudio::error::PaErrorAsResult;
+use crate::portaudio::error::PaErrorAsResult as _;
 use crate::portaudio::{global_lock, LockGuard, RawPtr};
 use crate::stream_options::{Callback, StreamOptions};
 
@@ -29,6 +29,8 @@ impl<Frame> StreamImpl<Frame> {
         device: DeviceHandle,
     ) -> Result<StreamImpl<Frame>> {
         let _guard = global_lock();
+        // Verify stream spec.
+        is_stream_spec_supported(&params, true, &_guard)?;
         // Wrap the callback into a thin pointer.
         let callback = Box::new(CallbackWrapper(params.user_options.callback));
         // Create the Portaudio stream.
@@ -105,11 +107,11 @@ impl<Frame> Drop for StreamImpl<Frame> {
 struct CallbackWrapper<Frame>(Callback<Frame>);
 
 extern "C" fn outstream_callback<Frame>(
-    input: *const c_void,
+    _input: *const c_void,
     output: *mut c_void,
     frame_count: c_ulong,
-    time_info: *const ffi::PaStreamCallbackTimeInfo,
-    status_flags: ffi::PaStreamCallbackFlags,
+    _time_info: *const ffi::PaStreamCallbackTimeInfo,
+    _status_flags: ffi::PaStreamCallbackFlags,
     user_data: *mut c_void,
 ) -> i32 {
     let callback = unsafe { (user_data as *mut CallbackWrapper<Frame>).as_mut() }
@@ -143,7 +145,7 @@ fn is_frame_size_valid<Frame>(
 
 #[must_use]
 fn is_stream_spec_supported<F>(
-    params: StreamOpenParams<F>,
+    params: &StreamOpenParams<F>,
     is_output: bool,
     _guard: &LockGuard,
 ) -> Result<()> {

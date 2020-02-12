@@ -1,5 +1,3 @@
-use sample::Sample;
-
 #[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Format {
@@ -34,9 +32,9 @@ pub type Callback<Frame> = Box<dyn FnMut(&mut [Frame]) + Send>;
 ///
 /// ```
 /// # use audiohal::*;
-/// # fn my_stream_callback(_: &mut [[f32; 2]]) {}
+/// fn my_stream_callback(_: &mut [[f32; 2]]) {}
 /// // Creates a StreamOptions with a stereo f32 frame.
-/// let options = StreamOptions::<[f32; 2]> {
+/// let options = StreamOptions {
 ///     callback: Box::new(my_stream_callback),
 ///     ..Default::default()
 /// };

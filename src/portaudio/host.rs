@@ -3,8 +3,8 @@ use std::convert::{TryFrom, TryInto as _};
 
 use crate::backend::Backend;
 use crate::error::{Error, Result};
-use crate::portaudio::device::Device;
-use crate::portaudio::error::PaErrorAsResult;
+use crate::portaudio::device;
+use crate::portaudio::error::PaErrorAsResult as _;
 use crate::portaudio::{global_lock, LockGuard, RawPtr};
 
 pub type HostHandle = std::sync::Arc<HostImpl>;
@@ -89,14 +89,10 @@ impl Host {
     /// # audiohal::Result::Ok(())
     /// ```
     ///
-    pub fn default_output_device(&mut self) -> Result<Device> {
+    pub fn default_output_device(&mut self) -> Result<device::Device> {
         let guard = global_lock();
         let device_index = self.0.default_output_device_index(&guard)?;
-        crate::portaudio::device::internal::from_device_index(
-            device_index,
-            HostHandle::clone(&self.0),
-            &guard,
-        )
+        device::from_device_index(device_index, HostHandle::clone(&self.0), &guard)
     }
 }
 
@@ -169,6 +165,7 @@ mod tests {
 
     #[test]
     fn creates_default_backend() -> Result<()> {
+        begin!();
         let host = Host::with_default_backend()?;
         println!("Host is called {}", host.name());
         Ok(())
@@ -176,6 +173,7 @@ mod tests {
 
     #[test]
     fn handles_invalid_backend() {
+        begin!();
         // Pick a backend that we know doesn't exist.
         #[cfg(any(unix, target_os = "macos"))]
         let backend = Backend::Wasapi;
@@ -189,6 +187,7 @@ mod tests {
 
     #[test]
     fn internal_handles_invalid_host_index() {
+        begin!();
         let _guard = global_lock();
         unsafe { ffi::Pa_Initialize() }.as_result().unwrap();
         let mut host = HostImpl::new();

@@ -87,6 +87,13 @@ mod test_prelude {
     pub use galvanic_assert::matchers::variant::*;
     pub use galvanic_assert::matchers::*;
 
+    #[macro_export]
+    macro_rules! begin {
+        () => {
+            let _guard = test_lock();
+        };
+    }
+
     pub fn is_initialized() -> bool {
         let _guard = global_lock();
         unsafe { ffi::Pa_GetDeviceCount() >= 0 }

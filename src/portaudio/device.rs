@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use crate::error::Result;
 use crate::portaudio::host::HostHandle;
-use crate::portaudio::Stream;
-use crate::portaudio::{global_lock, LockGuard};
+use crate::portaudio::LockGuard;
 use crate::stream_options::StreamOptions;
+use crate::Stream;
 
-pub mod internal;
+use crate::portaudio::internal::device as internal;
 
 pub type DeviceHandle = Arc<internal::Device>;
 pub struct Device(DeviceHandle);
@@ -51,6 +51,16 @@ impl Device {
     }
 }
 
+pub fn from_device_index(
+    index: i32,
+    host_handle: HostHandle,
+    _guard: &LockGuard,
+) -> Result<Device> {
+    Ok(Device(DeviceHandle::new(
+        internal::Device::from_device_index(index, host_handle, _guard)?,
+    )))
+}
+
 #[cfg(test)]
 mod tests {
     use crate::portaudio::test_prelude::*;
@@ -62,7 +72,8 @@ mod tests {
 
     #[test]
     fn device_holds_host_ref() -> Result<()> {
-        let device = {
+        begin!();
+        let _device = {
             let mut host = Host::with_default_backend()?;
             host.default_output_device()?
         };
