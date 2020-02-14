@@ -19,7 +19,7 @@ mod portaudio;
 
 // Exporting public types.
 pub use backend::Backend;
-pub use error::Result;
+pub use error::{Error, Result};
 pub use stream_options::{Callback, Format, SampleRate, StreamOptions};
 
 // Exporting backend types.

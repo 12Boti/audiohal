@@ -24,7 +24,7 @@ impl Device {
     /// Output streams stream digital audio (in the form of frames) to a system's output device.
     /// The callback in  [`StreamOptions`] is called multiple times per second (depending on how you
     /// setup frames_per_buffer) in order to satisfy the requested sample-rate. See
-    /// [`portaudio::Stream`] for more details.
+    /// [`Stream`] for more details.
     ///
     /// # Examples
     ///
